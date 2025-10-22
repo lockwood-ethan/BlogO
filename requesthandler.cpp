@@ -1,9 +1,10 @@
-#include "oatpp-1.4.0/oatpp/oatpp/web/server/AsyncHttpConnectionHandler.hpp"
+#include "oatpp/web/server/HttpConnectionHandler.hpp"
 
-#include "oatpp-1.4.0/oatpp/oatpp/network/Server.hpp"
-#include "oatpp-1.4.0/oatpp/oatpp/network/tcp/server/ConnectionProvider.hpp"
-#include <oatpp-1.4.0/oatpp/oatpp/network/Address.hpp>
-#include <oatpp-1.4.0/oatpp/oatpp/web/server/HttpConnectionHandler.hpp>
+#include "oatpp/network/Server.hpp"
+#include "oatpp/network/tcp/server/ConnectionProvider.hpp"
+#include <oatpp/Environment.hpp>
+#include <oatpp/base/Log.hpp>
+#include <oatpp/web/server/HttpRouter.hpp>
 
 void run() {
 	auto router = oatpp::web::server::HttpRouter::createShared();
@@ -14,18 +15,15 @@ void run() {
 
 	oatpp::network::Server server(connectionProvider, connectionHandler);
 
-	OATPP_LOGI("MyApp", "Server running on port %s", connectionProvider->getProperty("port").getData());
+	OATPP_LOGi("Blog", "Server running on port %s", connectionProvider->getProperty("port").getData());
 
 	server.run();
 }
 
 int main() {
-
-	oatpp::base::Environment::init();
+	oatpp::Environment::init();
 
 	run();
 
-	oatpp::base::Environment::destroy();
-
-	return 0;
+	oatpp::Environment::destroy();
 }

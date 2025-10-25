@@ -1,7 +1,7 @@
 #ifndef MyController_hpp
 #define MyController_hpp
 
-#include "../dto/DTOs.hpp"
+#include "../dto/UserDto.hpp"
 
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "oatpp/core/macro/codegen.hpp"
@@ -14,9 +14,7 @@ public:
 	MyController(OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, objectMapper)) : oatpp::web::server::api::ApiController(objectMapper) {}
 public:
 	ENDPOINT("GET", "/hello", root) {
-		auto dto = MessageDto::createShared();
-		dto->statusCode = 200;
-		dto->message = "Hello World!";
+		auto dto = UserDto::createShared();
 		return createDtoResponse(Status::CODE_200, dto);
 	}
 };

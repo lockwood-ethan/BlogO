@@ -1,30 +1,41 @@
 #ifndef AppComponent_hpp
 #define AppComponent_hpp
 
+#include "dto/ConfigDto.hpp"
+
 #include "oatpp/parser/json/mapping/ObjectMapper.hpp"
-
-#include "oatpp/web/server/HttpConnectionHandler.hpp"
-#include "oatpp/network/tcp/server/ConnectionProvider.hpp"
-
 #include "oatpp/core/macro/component.hpp"
 
-class AppComponent {
-public:
-	OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, serverConnectionProvider) ([] {
-		return oatpp::network::tcp::server::ConnectionProvider::createShared({"192.168.0.92", 56494, oatpp::network::Address::IP_4});
-	}());
-   	
-   	OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, httpRouter) ([] {
-		return oatpp::web::server::HttpRouter::createShared();
-	}());
-	
-   	OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, serverConnectionHandler) ([] {
-		OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
-		return oatpp::web::server::HttpConnectionHandler::createShared(router);
-	}());
+#include "oatpp/core/base/CommandLineArguments.hpp"
 
-	OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::data::mapping::ObjectMapper>, apiObjectMapper) ([] {
-		return oatpp::parser::json::mapping::ObjectMapper::createShared();
+#include <cstdlib>
+
+class AppComponent {
+private:
+oatpp::base::CommandLineArguments m_cmdArgs;
+public:
+	AppComponent(const oatpp::base::CommandLineArguments& cmdArgs) : m_cmdArgs(cmdArgs) {}
+public:
+	OATPP_CREATE_COMPONENT(oatpp::Object<ConfigDto>, config) ([this] {
+		const char* configPath = CONFIG_PATH;
+		auto objectMapper = oatpp::parser::json::mapping::ObjectMapper::createShared();
+		
+		oatpp::String configText = oatpp::String::loadFromFile(configPath);
+		if (configText) {
+			auto profiles = objectMapper->readFromString<oatpp::Fields<oatpp::Object<ConfigDto>>>(configText);
+			const char *profileArg = std::getenv("CONFIG_PROFILE");
+			if (profileArg == nullptr) {
+				profileArg = m_cmdArgs.getNamedArgumentValue("--profile", "dev");
+			}
+			OATPP_LOGD("Server", "Loading configuration profile '%s'", profileArg);
+			auto profile = profiles.getValueByKey(profileArg, nullptr);
+			if (!profile) {
+				throw std::runtime_error("No configuration profile found. Server won't run");
+			}
+			return profile;
+		}
+		OATPP_LOGE("AppComponent", "Can't load configuration file at path '%s'", configPath);
+		throw std::runtime_error("[AppComponent]: Can't load configuration file");
 	}());
 };
 

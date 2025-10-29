@@ -1,23 +1,42 @@
+#include "controller/UserController.hpp"
 #include "AppComponent.hpp"
-#include "controller/MyController.hpp"
+#include "DatabaseComponent.hpp"
+#include "ServiceComponent.hpp"
+#include "SwaggerComponent.hpp"
+
+#include "oatpp-1.3.0/oatpp-swagger/Controller.hpp"
 
 #include "oatpp/network/Server.hpp"
 
-void run() {
-	AppComponent components;
-	OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
-	auto myController = std::make_shared<MyController>();
-	router->addController(myController);
-	OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, connectionHandler);
-	OATPP_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, connectionProvider);
-	oatpp::network::Server server(connectionProvider, connectionHandler);
-	OATPP_LOGI("Blog", "Server running on port %s", connectionProvider->getProperty("port").getData());
+#include <iostream>
+#include <oatpp/core/base/CommandLineArguments.hpp>
+#include <oatpp/core/base/Environment.hpp>
+
+void run(const oatpp::base::CommandLineArguments& args) {
+
+	AppComponent appComponent(args);
+	ServiceComponent serviceComponent;
+	SwaggerComponent swaggerComponent;
+	DatabaseComponent databaseComponent;
+
+	auto router = serviceComponent.httpRouter.getObject();
+	oatpp::web::server::api::Endpoints docEndpoints;
+
+	docEndpoints.append(router->addController(UserController::createShared())->getEndpoints());
+
+	router->addController(oatpp::swagger::Controller::createShared(docEndpoints));
+
+	oatpp::network::Server server(serviceComponent.serverConnectionProvider.getObject(),
+			       serviceComponent.serverConnectionHandler.getObject());
+
+	OATPP_LOGD("Server", "Running on port %s...", serviceComponent.serverConnectionProvider.getObject()->getProperty("port").toString()->c_str());
+
 	server.run();
 }
 
-int main() {
+int main(int argc, const char* argv[]) {
 	oatpp::base::Environment::init();
-	run();
+	run(oatpp::base::CommandLineArguments(argc, argv));
 	oatpp::base::Environment::destroy();
 	return 0;
 }

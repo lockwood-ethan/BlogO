@@ -3,8 +3,8 @@
 
 #include "dto/ConfigDto.hpp"
 
-#include "oatpp-1.3.0/oatpp-swagger/Model.hpp"
-#include "oatpp-1.3.0/oatpp-swagger/Resources.hpp"
+#include "oatpp-swagger/Model.hpp"
+#include "oatpp-swagger/Resources.hpp"
 #include "oatpp/core/utils/ConversionUtils.hpp"
 #include "oatpp/core/macro/component.hpp"
 
